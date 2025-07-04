@@ -27,45 +27,48 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database configuration
-let dbConfig = {};
+const dbConfig = process.env.MYSQL_URL 
+  ? { uri: process.env.MYSQL_URL } 
+  : {
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    };
 
-if (process.env.MYSQL_URL) {
-  // Railway MySQL connection
-  dbConfig = {
-    uri: process.env.MYSQL_URL,
-    waitForConnections: true,
-    connectionLimit: process.env.NODE_ENV === 'production' ? 20 : 10,
-    queueLimit: 0,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 0
-  };
-} else {
-  // Local MySQL connection
-  dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+// Add common pool configuration
+const poolConfig = {
+  ...dbConfig,
   waitForConnections: true,
-    connectionLimit: process.env.NODE_ENV === 'production' ? 20 : 10,
-    queueLimit: 0,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 0
-  };
-}
+  connectionLimit: process.env.NODE_ENV === 'production' ? 20 : 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
+};
 
-export const pool = mysql.createPool(dbConfig);
+export const pool = mysql.createPool(poolConfig);
 
-// Test database connection
-pool.getConnection()
-  .then(connection => {
-    console.log('Database connected successfully');
-    connection.release();
-  })
-  .catch(err => {
-    console.error('Error connecting to the database:', err);
-    process.exit(1);
-  });
+// Test database connection and retry if it fails
+const connectWithRetry = async (retries = 5, delay = 5000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const connection = await pool.getConnection();
+      console.log('Database connected successfully');
+      connection.release();
+      return;
+    } catch (err) {
+      console.error(`Database connection attempt ${i + 1} failed:`, err);
+      if (i === retries - 1) {
+        console.error('Max retries reached. Exiting...');
+        process.exit(1);
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+};
+
+// Connect to database
+connectWithRetry();
 
 // Routes
 app.use('/api/users', usersRouter);
@@ -78,7 +81,8 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    database: pool.pool.config.connectionConfig.database || 'Using connection URL'
   });
 });
 
