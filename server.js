@@ -27,26 +27,67 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database configuration
-const dbConfig = process.env.MYSQL_URL 
-  ? { uri: process.env.MYSQL_URL } 
-  : {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-    };
+const createPoolConfig = () => {
+  // Log environment for debugging
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Database Variables:', {
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    mysqlUrl: process.env.MYSQL_URL ? 'exists' : 'not found'
+  });
 
-// Add common pool configuration
-const poolConfig = {
-  ...dbConfig,
-  waitForConnections: true,
-  connectionLimit: process.env.NODE_ENV === 'production' ? 20 : 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  // For Railway deployment
+  if (process.env.MYSQL_URL && process.env.MYSQL_URL !== '${MYSQL_URL}') {
+    console.log('Using MySQL URL configuration');
+    const connectionString = process.env.MYSQL_URL;
+    // Extract connection details from URL
+    try {
+      const url = new URL(connectionString);
+      return {
+        host: url.hostname,
+        user: url.username,
+        password: url.password,
+        database: url.pathname.substr(1),
+        port: url.port,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      };
+    } catch (error) {
+      console.error('Error parsing MySQL URL:', error);
+      throw new Error('Invalid MySQL URL configuration');
+    }
+  }
+
+  // For local development
+  console.log('Using local database configuration');
+  return {
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'shoppoint_db',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  };
 };
 
-export const pool = mysql.createPool(poolConfig);
+// Create the pool with configuration
+let pool;
+try {
+  const config = createPoolConfig();
+  console.log('Database config (sanitized):', {
+    ...config,
+    password: '***hidden***',
+    user: '***hidden***'
+  });
+  pool = mysql.createPool(config);
+} catch (error) {
+  console.error('Failed to create database pool:', error);
+  process.exit(1);
+}
+
+export { pool };
 
 // Test database connection and retry if it fails
 const connectWithRetry = async (retries = 5, delay = 5000) => {
@@ -55,53 +96,75 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
       const connection = await pool.getConnection();
       console.log('Database connected successfully');
       connection.release();
-      return;
+      return true;
     } catch (err) {
-      console.error(`Database connection attempt ${i + 1} failed:`, err);
+      console.error(`Database connection attempt ${i + 1} failed:`, {
+        code: err.code,
+        errno: err.errno,
+        syscall: err.syscall,
+        hostname: err.hostname,
+        host: err.host,
+        port: err.port
+      });
+      
       if (i === retries - 1) {
         console.error('Max retries reached. Exiting...');
-        process.exit(1);
+        return false;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+  return false;
 };
 
-// Connect to database
-connectWithRetry();
+// Initialize server only after database connection
+const initializeServer = async () => {
+  const isConnected = await connectWithRetry();
+  
+  if (!isConnected) {
+    console.error('Could not connect to database after multiple attempts');
+    process.exit(1);
+  }
 
-// Routes
-app.use('/api/users', usersRouter);
-app.use('/api/products', productsRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/points', pointsRouter);
+  // Routes
+  app.use('/api/users', usersRouter);
+  app.use('/api/products', productsRouter);
+  app.use('/api/orders', ordersRouter);
+  app.use('/api/points', pointsRouter);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    database: pool.pool.config.connectionConfig.database || 'Using connection URL'
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      database: 'connected'
+    });
   });
-});
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal Server Error' 
-      : err.message 
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ 
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Internal Server Error' 
+        : err.message 
+    });
   });
-});
 
-// Handle unhandled routes
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+  // Handle unhandled routes
+  app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
 
-const PORT = process.env.PORT || 3005;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  const PORT = process.env.PORT || 3005;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  });
+};
+
+// Start the server
+initializeServer().catch(err => {
+  console.error('Failed to initialize server:', err);
+  process.exit(1);
 }); 
