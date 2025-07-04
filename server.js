@@ -37,7 +37,7 @@ const createPoolConfig = () => {
   });
 
   // For Railway deployment
-  if (process.env.MYSQL_URL && process.env.MYSQL_URL !== '${MYSQL_URL}') {
+  if (process.env.MYSQL_URL && process.env.MYSQL_URL !== '${MYSQL_URL}' && process.env.MYSQL_URL.startsWith('mysql://')) {
     console.log('Using MySQL URL configuration');
     const connectionString = process.env.MYSQL_URL;
     // Extract connection details from URL
@@ -48,18 +48,19 @@ const createPoolConfig = () => {
         user: url.username,
         password: url.password,
         database: url.pathname.substr(1),
-        port: url.port,
+        port: url.port || 3306,
         ssl: {
           rejectUnauthorized: false
         }
       };
     } catch (error) {
       console.error('Error parsing MySQL URL:', error);
-      throw new Error('Invalid MySQL URL configuration');
+      console.log('Falling back to local configuration');
+      // Fall back to local configuration if URL parsing fails
     }
   }
 
-  // For local development
+  // For local development or fallback
   console.log('Using local database configuration');
   return {
     host: process.env.DB_HOST || '127.0.0.1',
