@@ -30,47 +30,49 @@ app.use(express.urlencoded({ extended: true }));
 const createPoolConfig = () => {
   // Log environment for debugging
   console.log('Environment:', process.env.NODE_ENV);
-  console.log('Database Variables:', {
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    mysqlUrl: process.env.MYSQL_URL ? 'exists' : 'not found'
-  });
-
-  // For Railway deployment
-  if (process.env.MYSQL_URL && process.env.MYSQL_URL !== '${MYSQL_URL}' && process.env.MYSQL_URL.startsWith('mysql://')) {
-    console.log('Using MySQL URL configuration');
-    const connectionString = process.env.MYSQL_URL;
-    // Extract connection details from URL
+  
+  // For Railway deployment - using Railway's provided database URL
+  const railwayDbUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+  
+  if (railwayDbUrl && railwayDbUrl.startsWith('mysql://')) {
+    console.log('Using Railway database configuration');
     try {
-      const url = new URL(connectionString);
+      const url = new URL(railwayDbUrl);
       return {
         host: url.hostname,
         user: url.username,
         password: url.password,
         database: url.pathname.substr(1),
-        port: url.port || 3306,
-        ssl: {
+        port: parseInt(url.port) || 3306,
+        ssl: process.env.NODE_ENV === 'production' ? {
           rejectUnauthorized: false
-        }
+        } : false
       };
     } catch (error) {
-      console.error('Error parsing MySQL URL:', error);
+      console.error('Error parsing database URL:', error);
       console.log('Falling back to local configuration');
-      // Fall back to local configuration if URL parsing fails
     }
   }
 
   // For local development or fallback
   console.log('Using local database configuration');
-  return {
-    host: process.env.DB_HOST || '127.0.0.1',
+  const config = {
+    host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'shoppoint_db',
+    port: parseInt(process.env.DB_PORT) || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
   };
+
+  console.log('Database config (sanitized):', {
+    ...config,
+    password: '***hidden***'
+  });
+
+  return config;
 };
 
 // Create the pool with configuration
