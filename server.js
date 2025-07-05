@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 
-// 🌐 CORS config
+// CORS config
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production'
     ? process.env.FRONTEND_URL
@@ -28,10 +28,10 @@ app.use(express.urlencoded({ extended: true }));
 let pool;
 
 if (process.env.MYSQL_URL) {
-  // 🌍 Use connection URL (from Railway)
+  //  Use connection URL (from Railway)
   pool = mysql.createPool(process.env.MYSQL_URL + '?ssl={"rejectUnauthorized":true}');
 } else {
-  // 🧾 Manual config fallback
+  //  Manual config fallback
   pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -48,7 +48,7 @@ if (process.env.MYSQL_URL) {
 
 export { pool };
 
-// 🔁 Retry DB connection
+//  Retry DB connection
 const connectWithRetry = async (retries = 5, delay = 5000) => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -66,13 +66,13 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
 
 await connectWithRetry();
 
-// 📦 Routes
+// Routes
 app.use('/api/users', usersRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/points', pointsRouter);
 
-// 🧪 Health Check
+//  Health Check
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -82,7 +82,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ⚠️ Error Handling
+//  Error Handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -92,12 +92,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 🕳️ 404 Handler
+
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// 🚀 Start Server
+// Start Server
 const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT} (${process.env.NODE_ENV})`);
