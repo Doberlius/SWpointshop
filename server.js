@@ -78,6 +78,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to SWPointshop API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: {
+        users: '/api/users',
+        products: '/api/products',
+        orders: '/api/orders',
+        points: '/api/points'
+      }
+    }
+  });
+});
+
 //  Error Handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
