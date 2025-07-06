@@ -27,13 +27,13 @@ app.use((req, res, next) => {
   next();
 });
 
+
 // DATABASE CONNECT
 const pool = mysql.createPool({
-  host: process.env.MYSQLHOST || 'mysql.railway.internal',
-  user: process.env.MYSQLUSER || 'root',
-  password: process.env.MYSQLPASSWORD || 'wUxXNdMFPLFtmMIgSBwtnRcJoBvqhyhZ',
-  port: process.env.MYSQLPORT || 3306,
-  database: process.env.MYSQLDATABASE || 'railway',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,    
+  database: process.env.DB_DATABASE,
 });
 
 // Test connection
