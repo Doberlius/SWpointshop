@@ -12,39 +12,27 @@ dotenv.config();
 const app = express();
 
 // CORS configuration
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow all origins in development
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    
-    // In production, check against allowed origins
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'https://s-wpointshop.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean); // Remove null/undefined values
-    
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('Blocked origin:', origin); // For debugging
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-}));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://s-wpointshop.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
-// Enable credentials in Axios
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
 });
 
+// Handle OPTIONS preflight
+app.options('*', (req, res) => {
+  res.status(200).end();
+});
 
 // DATABASE CONNECT
 const pool = mysql.createPool(
