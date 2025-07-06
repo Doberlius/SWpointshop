@@ -11,24 +11,32 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  process.env.FRONTEND_URL
-];
-
+// CORS configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    // ถ้าไม่มี origin (เช่น curl/postman) ก็อนุญาต
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
+  origin: function(origin, callback) {
+    // Allow all origins in development
+    if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
+    }
+    
+    // In production, check against allowed origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'https://s-wpointshop.vercel.app/',
+      process.env.FRONTEND_URL
+    ].filter(Boolean); // Remove null/undefined values
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
     } else {
-      return callback(new Error('Not allowed by CORS'));
+      console.log('Blocked origin:', origin); // For debugging
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
 }));
 
 // Enable credentials in Axios
