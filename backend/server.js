@@ -11,6 +11,10 @@ dotenv.config();
 
 const app = express();
 
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:5173',
