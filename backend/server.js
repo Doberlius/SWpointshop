@@ -29,12 +29,17 @@ app.use((req, res, next) => {
 
 
 // DATABASE CONNECT
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,    
-  database: process.env.DB_DATABASE,
-});
+const pool = mysql.createPool(
+  process.env.NODE_ENV === 'production' && process.env.MYSQL_URL
+    ? { uri: process.env.MYSQL_URL }
+    : {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,    
+        database: process.env.DB_DATABASE,
+        port: process.env.DB_PORT || 3306,
+      }
+);
 
 // Test connection
 try {
