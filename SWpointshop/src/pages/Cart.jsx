@@ -58,7 +58,7 @@ function Cart() {
   const { data: userCoupons } = useQuery('userCoupons', async () => {
     if (!user) return [];
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3005/api/points/coupons', {
+    const response = await axios.get('/api/points/coupons', {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -98,7 +98,7 @@ function Cart() {
 
     try {
       const response = await axios.post(
-        'http://localhost:3005/api/orders',
+        '/api/orders',
         {
           items: orderItems,
           total_amount: getFinalTotal(),
@@ -114,7 +114,7 @@ function Cart() {
       );
 
       // Get updated user data to sync points
-      const userResponse = await axios.get('http://localhost:3005/api/users/profile', {
+      const userResponse = await axios.get('/api/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
 

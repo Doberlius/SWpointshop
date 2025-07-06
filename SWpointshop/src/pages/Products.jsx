@@ -74,13 +74,13 @@ function Products() {
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery('products', async () => {
-    const response = await axios.get('http://localhost:3005/api/products');
+    const response = await axios.get('/api/products');
     return response.data;
   });
 
   const { data: couponRates } = useQuery('couponRates', async () => {
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3005/api/points/coupon-rates', {
+    const response = await axios.get('/api/points/coupon-rates', {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -91,7 +91,7 @@ function Products() {
   const { data: userCoupons } = useQuery('userCoupons', async () => {
     if (!user) return [];
     const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:3005/api/points/coupons', {
+    const response = await axios.get('/api/points/coupons', {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -103,7 +103,7 @@ function Products() {
     async (points_amount) => {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:3005/api/points/exchange-coupon',
+        '/api/points/exchange-coupon',
         { points_amount },
         { headers: { Authorization: `Bearer ${token}` } }
       );

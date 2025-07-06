@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async (token) => {
     try {
       setError(null);
-      const response = await axios.get('http://localhost:3005/api/users/profile', {
+      const response = await axios.get('/api/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setError(null);
-      const response = await axios.post('http://localhost:3005/api/users/login', {
+      const response = await axios.post('/api/users/login', {
         email,
         password
       });
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password) => {
     try {
       setError(null);
-      const response = await axios.post('http://localhost:3005/api/users/register', {
+      const response = await axios.post('/api/users/register', {
         username,
         email,
         password

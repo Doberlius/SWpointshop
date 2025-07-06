@@ -51,7 +51,7 @@ function Profile() {
     async () => {
       if (!user) return null;
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3005/api/points/transactions', {
+      const response = await axios.get('/api/points/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
@@ -64,7 +64,7 @@ function Profile() {
   const updateProfile = useMutation(async (data) => {
     const token = localStorage.getItem('token');
     const response = await axios.put(
-      'http://localhost:3005/api/users/profile',
+      '/api/users/profile',
       data,
       {
         headers: { Authorization: `Bearer ${token}` }

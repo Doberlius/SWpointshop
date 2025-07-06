@@ -40,7 +40,7 @@ function Orders() {
     async () => {
       if (!user) return null;
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3005/api/orders', {
+      const response = await axios.get('/api/orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;
@@ -85,7 +85,7 @@ function Orders() {
     setQrError(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:3005/api/orders/${orderId}`, {
+      const response = await axios.get(`/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSelectedOrder(response.data);

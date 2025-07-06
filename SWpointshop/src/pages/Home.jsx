@@ -31,7 +31,7 @@ function Home() {
   const theme = useTheme();
 
   const { data: featuredProducts } = useQuery('featuredProducts', async () => {
-    const response = await axios.get('http://localhost:3005/api/products');
+    const response = await axios.get('/api/products');
     return response.data.slice(0, 4); // Get first 4 products as featured
   });
 

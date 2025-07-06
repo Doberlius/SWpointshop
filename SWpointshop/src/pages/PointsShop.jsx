@@ -30,7 +30,7 @@ function PointsShop() {
   const { user } = useAuth();
 
   const { data: products, isLoading } = useQuery('pointsProducts', async () => {
-    const response = await axios.get('http://localhost:3005/api/points/products');
+    const response = await axios.get('/api/points/products');
     return response.data;
   });
 
