@@ -9,6 +9,7 @@ import axios from 'axios'
 
 // Configure axios defaults
 axios.defaults.baseURL = import.meta.env.VITE_API_URL
+axios.defaults.withCredentials = true
 
 const queryClient = new QueryClient()
 
