@@ -22,7 +22,7 @@ app.use(cors({
     // In production, check against allowed origins
     const allowedOrigins = [
       'http://localhost:5173',
-      'https://s-wpointshop.vercel.app/',
+      'https://s-wpointshop.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean); // Remove null/undefined values
     
