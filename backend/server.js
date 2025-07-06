@@ -28,21 +28,13 @@ app.use((req, res, next) => {
 });
 
 // DATABASE CONNECT
-let pool;
-
-if (process.env.MYSQL_URL) {
-  pool = mysql.createPool(process.env.MYSQL_URL);
-} else {
-  pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-  });
-}
-
-export { pool };
+const pool = mysql.createPool({
+  host: process.env.MYSQLHOST || 'mysql.railway.internal',
+  user: process.env.MYSQLUSER || 'root',
+  password: process.env.MYSQLPASSWORD || 'wUxXNdMFPLFtmMIgSBwtnRcJoBvqhyhZ',
+  port: process.env.MYSQLPORT || 3306,
+  database: process.env.MYSQLDATABASE || 'railway',
+});
 
 // Test connection
 try {
@@ -85,3 +77,5 @@ const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+export { pool };
