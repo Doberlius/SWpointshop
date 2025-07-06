@@ -11,15 +11,25 @@ dotenv.config();
 
 const app = express();
 
-// CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL
-    : 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // ถ้าไม่มี origin (เช่น curl/postman) ก็อนุญาต
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
-app.use(express.json());
 
 // Enable credentials in Axios
 app.use((req, res, next) => {
