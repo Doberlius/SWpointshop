@@ -11,23 +11,23 @@ export const AuthProvider = ({ children }) => {
   const queryClient = useQueryClient();
   const [refreshInterval, setRefreshInterval] = useState(null);
 
-  const clearAuthState = useCallback(() => {
+  const clearAuthState = useCallback(() => {  // useCallback -> memorize function
     const currentUser = user;
     if (currentUser) {
-      // Remove user-specific cart data
+      // clear cart data
       localStorage.removeItem(`cart_${currentUser.id}`);
     }
     
-    localStorage.removeItem('token');
+    localStorage.removeItem('token'); // remove token auth
     if (refreshInterval) {
       clearInterval(refreshInterval);
       setRefreshInterval(null);
     }
     setUser(null);
     setError(null);
-    queryClient.clear();
+    queryClient.clear(); // clear cache completely
     queryClient.resetQueries();
-  }, [refreshInterval, queryClient, user]);
+  }, [refreshInterval, queryClient, user]);  // useCallback only run when you call i
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, []); // run on first render
 
   useEffect(() => {
     const token = localStorage.getItem('token');

@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { ToastContainer } from 'react-toastify';
+import { QueryClient, QueryClientProvider } from 'react-query';  // store data in cache then use it from there
+import { ToastContainer } from 'react-toastify'; // for notifications like success messgae pop up when action complete
 import 'react-toastify/dist/ReactToastify.css';
 
 // Contexts
